@@ -69,6 +69,8 @@ namespace Servidor
             return () =>
             {
                 _estaAtivo = status;
+                if (!status)
+                    Desconectar();
                 InverterStatusDosCampos();
             };
         }
@@ -109,12 +111,17 @@ namespace Servidor
         private Action RemoverLinhaDeUsuario(long id)
             => () =>
             {
-                var linhaDoUsuario = usuariosDataGridView.Rows
-                    .Cast<DataGridViewRow>()
-                    .FirstOrDefault(x => x.Cells["identificador"].Value.Equals(id));
-
-                if (linhaDoUsuario.HasValue())
-                    usuariosDataGridView.Rows.RemoveAt(linhaDoUsuario.Index);
+                usuariosDataGridView.Invoke((MethodInvoker)delegate
+                {
+                    foreach (DataGridViewRow row in usuariosDataGridView.Rows)
+                    {
+                        if (row.Cells["identificador"].Value.ToString() == id.ToString())
+                        {
+                            usuariosDataGridView.Rows.RemoveAt(row.Index);
+                            break;
+                        }
+                    }
+                });
 
                 AtualizarQuantidadeDeClientes(usuariosDataGridView.Rows.Count);
             };
@@ -508,9 +515,7 @@ namespace Servidor
                     RemoverUsuarioDoGridDeConectados(cliente.Id);
                     return;
                 }
-                
                 DesconectarTodosUsuarios();
-                
             });
         }
 
